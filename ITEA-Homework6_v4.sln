@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30717.126
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ITEA-Homework6_v4", "ITEA-Homework6_v4.csproj", "{BDE8ECB9-F3F3-419F-8FA9-E36E79ECB2AA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BDE8ECB9-F3F3-419F-8FA9-E36E79ECB2AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BDE8ECB9-F3F3-419F-8FA9-E36E79ECB2AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BDE8ECB9-F3F3-419F-8FA9-E36E79ECB2AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BDE8ECB9-F3F3-419F-8FA9-E36E79ECB2AA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F3669240-6229-4A1E-A481-83FE78F3383C}
+	EndGlobalSection
+EndGlobal
