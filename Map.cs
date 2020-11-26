@@ -388,7 +388,13 @@ namespace ITEA_Homework6_v4
             int newPosY_Player = yPos_Player + yDelta_Player;
 
             cells[xPos_Player, yPos_Player].Reset();
-            SetPlayer(player, ref cells[newPosX_Player, newPosY_Player]);
+            if (player.IsAlive)
+                SetPlayer(player, ref cells[newPosX_Player, newPosY_Player]);
+            else
+            {
+                player.Icon = 'X';
+                SetPlayer(player, ref cells[xPos_Player, yPos_Player]);
+            }
 
             //if (cells[newPosX_Player, newPosY_Player].CellValue == enemies[0].Icon)
             //{
@@ -419,7 +425,7 @@ namespace ITEA_Homework6_v4
             {
                 isInBounds = false;
             }
-            return isInBounds && cells[newPosX_Enemy, newPosY_Enemy].CanMove && cells[newPosX_Enemy, newPosY_Enemy].CellValue != player.Icon;
+            return isInBounds && cells[newPosX_Enemy, newPosY_Enemy].CanMove && !cells[newPosX_Enemy, newPosY_Enemy].IsPlayerKeeper;
         }
         public bool IsPositionAvailable(int xDelta_Player, int yDelta_Player) //read the second comment and add Enemy enemy to the parameters if you want to customize damage
         {
@@ -436,7 +442,7 @@ namespace ITEA_Homework6_v4
             {
                 isInBounds = false;
             }
-            return isInBounds && cells[newPosX_Player, newPosY_Player].CanMove && cells[newPosX_Player, newPosY_Player].CellValue != enemies[0].Icon;
+            return isInBounds && cells[newPosX_Player, newPosY_Player].CanMove && !cells[newPosX_Player, newPosY_Player].IsEnemyKeeper;
         }
         public void RenderMap()
         {
