@@ -4,9 +4,24 @@ namespace ITEA_Homework6_v4
 {
     public class Player
     {
-        private int health, ammo;
+        private int health, ammo, damage;
         public char Icon { get; set; }
         public bool IsAlive { get; set; }
+        public int Damage
+        {
+            get
+            {
+                return damage;
+            }
+            set
+            {
+                if (value < 1)
+                {
+                    damage = 0;
+                }
+                else damage = value;
+            }
+        }
         public int Health
         {
             get
@@ -58,6 +73,7 @@ namespace ITEA_Homework6_v4
             Ammo = ammo;
             IsAlive = true;
             Icon = '☻';
+            Damage = 25;
         }
         public void Set(char[,] symbols, Player player, Enemy[] enemies, ref Map map)
         {

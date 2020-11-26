@@ -9,7 +9,11 @@ namespace ITEA_Homework6_v4
         static void Main(string[] args)
         {
             string path = Console.ReadLine();
-            Start(path);
+            if(path.Contains(".txt"))
+            {
+                Start(path);
+            }
+            else Start(path + ".txt");
         }
         //static char[,] RandomMap()
         //{

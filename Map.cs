@@ -9,15 +9,16 @@ namespace ITEA_Homework6_v4
         public int XSize { get; set; }
         public int YSize { get; set; }
         public int TurnCount { get; set; }
+        private int enemyMovementsCount;
         Player player;
         Enemy[] enemies;
         Cell[,] cells;
         Random[] rands;
         Random rand = new Random();
-        int fix_counter_left = 0;
-        int fix_counter_right = 0;
-        int fix_counter_up = 0;
-        int fix_counter_down = 0;
+        private int fix_counter_left = 0;
+        private int fix_counter_right = 0;
+        private int fix_counter_up = 0;
+        private int fix_counter_down = 0;
         public Map(int size_x, int size_y, Player player, Enemy[] enemies)
         {
             XSize = size_x;
@@ -27,6 +28,7 @@ namespace ITEA_Homework6_v4
             this.player = player;
             this.enemies = enemies;
             rands = new Random[enemies.Length];
+            enemyMovementsCount = 0;
         }
         public Map()
         {
@@ -58,7 +60,7 @@ namespace ITEA_Homework6_v4
                 throw new Exception("CanMove = false");
             }
         }
-        public int[] Generator(int XpY, int XmY)
+        public int[] Generator()
         {
             Random rand1 = new Random((int)DateTime.Now.Day);
             Random rand2 = new Random((int)DateTime.Now.Day - (int)DateTime.Now.Second);
@@ -75,7 +77,7 @@ namespace ITEA_Homework6_v4
         {
             bool res;
             int X, Y;
-            if (cells[enemy.X + 0, enemy.Y - 1].CellValue == player.Icon)
+            if (cells[enemy.X + 0, enemy.Y - 1].IsPlayerKeeper)
             {
                 res = true;
                 X = enemy.X + 0;
@@ -83,7 +85,7 @@ namespace ITEA_Homework6_v4
                 var tuple = (res, X, Y);
                 return tuple;
             }
-            else if (cells[enemy.X - 1, enemy.Y + 0].CellValue == player.Icon)
+            else if (cells[enemy.X - 1, enemy.Y + 0].IsPlayerKeeper)
             {
                 res = true;
                 X = enemy.X - 1;
@@ -91,7 +93,7 @@ namespace ITEA_Homework6_v4
                 var tuple = (res, X, Y);
                 return tuple;
             }
-            else if (cells[enemy.X + 0, enemy.Y + 1].CellValue == player.Icon)
+            else if (cells[enemy.X + 0, enemy.Y + 1].IsPlayerKeeper)
             {
                 res = true;
                 X = enemy.X + 0;
@@ -99,7 +101,7 @@ namespace ITEA_Homework6_v4
                 var tuple = (res, X, Y);
                 return tuple;
             }
-            else if (cells[enemy.X + 1, enemy.Y + 0].CellValue == player.Icon)
+            else if (cells[enemy.X + 1, enemy.Y + 0].IsPlayerKeeper) //if doesnt work replace with .CellValue == player.Icon
             {
                 res = true;
                 X = enemy.X + 1;
@@ -109,88 +111,125 @@ namespace ITEA_Homework6_v4
             }
             else return (false, 0, 0);
         }
+        /// <summary>
+        /// Returning 2 values. 1 - X, 2 - Y (Potential positions to move - newX, newY)
+        /// </summary>
+        /// <param name="dx"></param>
+        /// <param name="dy"></param>
+        /// <param name="enemy_index"></param>
+        /// <returns></returns>
+        public (int, int) ReturnNewPosition(int dx, int dy, int enemy_index)
+        {
+            var tuple = (enemies[enemy_index].X + dx, enemies[enemy_index].Y + dy);
+            return tuple;
+        }
+        public int IndexOfNearestEnemy(Enemy[] enemies)
+        {
+            double[] distances = new double[enemies.Length];
+            for(int i = 0; i < enemies.Length; i++)
+            {
+                distances[i] = CalculateDistance(enemies[i].X, enemies[i].Y);
+            }
+            return Array.IndexOf(distances, distances.Min());
+        }
+        public double CalculateDistance(int newX, int newY)
+        {
+            double ans = Sqrt((player.X - newX) * (player.X - newX) + (player.Y - newY) * (player.Y - newY));
+            return ans;
+        }
+        public int ChooseIndex(bool[] indicators, int enemy_index) //0 - down, 1 - up, 2 - left, 3 - right
+        {
+            double[] movements = new double[4];
+            for(int i = 0; i < 4; i++)
+            {
+                if(indicators[i] == true)
+                {
+                    if (i == 0)
+                    {
+                        double move_down = CalculateDistance(ReturnNewPosition(1, 0, enemy_index).Item1, ReturnNewPosition(1, 0, enemy_index).Item2);
+                        movements[i] = move_down;
+                    }
+                    else if (i == 1)
+                    {
+                        double move_up = CalculateDistance(ReturnNewPosition(-1, 0, enemy_index).Item1, ReturnNewPosition(-1, 0, enemy_index).Item2);
+                        movements[i] = move_up;
+                    }
+                    else if (i == 2)
+                    {
+                        double move_left = CalculateDistance(ReturnNewPosition(0, -1, enemy_index).Item1, ReturnNewPosition(0, -1, enemy_index).Item2);
+                        movements[i] = move_left;
+                    }
+                    else if (i == 3)
+                    {
+                        double move_right = CalculateDistance(ReturnNewPosition(0, 1, enemy_index).Item1, ReturnNewPosition(0, 1, enemy_index).Item2);
+                        movements[i] = move_right;
+                    }
+                }
+                else
+                {
+                    movements[i] = 999999;
+                }
+            }
+            return Array.IndexOf(movements, movements.Min());
+        }
         public void MoveEnemy()
         {
+            enemyMovementsCount++;
             for (int i = 0; i < enemies.Length; i++)
             {
                 int index = rand.Next(0, 4);
                 bool[] indicators = new bool[4];
-                if (IsPositionAvailable_Enemy(1, 0, enemies[i]))
+                if (IsPositionAvailable_Enemy(1, 0, enemies[i])) //down
                 {
                     indicators[0] = true;
                 }
                 else indicators[0] = false;
-                if (IsPositionAvailable_Enemy(-1, 0, enemies[i]))
+                if (IsPositionAvailable_Enemy(-1, 0, enemies[i])) //up
                 {
                     indicators[1] = true;
                 }
                 else indicators[1] = false;
-                if (IsPositionAvailable_Enemy(0, -1, enemies[i]))
+                if (IsPositionAvailable_Enemy(0, -1, enemies[i])) //left
                 {
                     indicators[2] = true;
                 }
                 else indicators[2] = false;
-                if (IsPositionAvailable_Enemy(0, 1, enemies[i]))
+                if (IsPositionAvailable_Enemy(0, 1, enemies[i])) //right
                 {
                     indicators[3] = true;
                 }
                 else indicators[3] = false;
                 if (indicators[0] == true || indicators[1] == true || indicators[2] == true || indicators[3] == true)
                 {
-                    while (indicators[index] != true)
+                    if (enemyMovementsCount % 2 == 0)
                     {
-                        index = rand.Next(0, 4);
+                        while (indicators[index] != true)
+                        {
+                            index = rand.Next(0, 4);
+                        }
                     }
+                    else index = ChooseIndex(indicators, i);
                     switch (index)
                     {
                         case 0:
                             SetEnemiesToPositions(1, 0, ref enemies[i]);
-                            if (IsPlayerNear(enemies[i]).Item1)
-                            {
-                                player.Health -= 15;
-                                enemies[i].Health -= 25;
-                            }
                             break;
                         case 1:
                             SetEnemiesToPositions(-1, 0, ref enemies[i]);
-                            if (IsPlayerNear(enemies[i]).Item1)
-                            {
-                                player.Health -= 15;
-                                enemies[i].Health -= 25;
-                            }
                             break;
                         case 2:
                             SetEnemiesToPositions(0, -1, ref enemies[i]);
-                            if (IsPlayerNear(enemies[i]).Item1)
-                            {
-                                player.Health -= 15;
-                                enemies[i].Health -= 25;
-                            }
                             break;
                         case 3:
                             SetEnemiesToPositions(0, 1, ref enemies[i]);
-                            if (IsPlayerNear(enemies[i]).Item1)
-                            {
-                                player.Health -= 15;
-                                enemies[i].Health -= 25;
-                            }
                             break;
                         default:
                             break;
                     }
                 }
-                else if (indicators[0] == indicators[1] == indicators[2] == indicators[3] == false)
+                if (IsPlayerNear(enemies[i]).Item1 && enemies[i].IsAlive && player.IsAlive)
                 {
-                    if (IsPlayerNear(enemies[i]).Item1)
-                    {
-                        player.Health -= 15;
-                        enemies[i].Health -= 25;
-                    }
-                }
-                if (IsPlayerNear(enemies[i]).Item1)
-                {
-                    player.Health -= 15;
-                    enemies[i].Health -= 25;
+                    player.Health -= enemies[i].Damage;
                 }
             }
         }
@@ -238,16 +277,33 @@ namespace ITEA_Homework6_v4
                         case ConsoleKey.A:
                             {
 
-                                if (IsPositionAvailable(0, -1))
+                                if (IsPositionAvailable(0, -1) && player.IsAlive)
                                 {
-
+                                    for (int i = 0; i < enemies.Length; i++)
+                                    {
+                                        DamageToEnemy(0, -1, enemies[i]);
+                                    }
                                     SetPlayerToPosition(0, -1);
                                     TurnCount++;
                                     player.Icon = 'P';
                                 }
                                 else
                                 {
-                                    Console.WriteLine("Position is unavailable");
+                                    if (!player.IsAlive)
+                                    {
+                                        player.Icon = 'X';
+                                        Console.Clear();
+                                        ToConsole("GAME OVER", ConsoleColor.Red);
+                                        return;
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Position is unavailable");
+                                        for (int i = 0; i < enemies.Length; i++)
+                                        {
+                                            DamageToEnemy(0, -1, enemies[i]);
+                                        }
+                                    }
                                     isInputSuccess = false;
                                 }
                                 MoveEnemy();
@@ -255,16 +311,33 @@ namespace ITEA_Homework6_v4
                             }
                         case ConsoleKey.W:
                             {
-
-                                if (IsPositionAvailable(-1, 0))
+                                if (IsPositionAvailable(-1, 0) && player.IsAlive)
                                 {
+                                    for (int i = 0; i < enemies.Length; i++)
+                                    {
+                                        DamageToEnemy(-1, 0, enemies[i]);
+                                    }
                                     SetPlayerToPosition(-1, 0);
                                     TurnCount++;
                                     player.Icon = '↑';
                                 }
                                 else
                                 {
-                                    Console.WriteLine("Position is unavailable");
+                                    if (!player.IsAlive)
+                                    {
+                                        player.Icon = 'X';
+                                        Console.Clear();
+                                        ToConsole("GAME OVER", ConsoleColor.Red);
+                                        return;
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Position is unavailable");
+                                        for (int i = 0; i < enemies.Length; i++)
+                                        {
+                                            DamageToEnemy(-1, 0, enemies[i]);
+                                        }
+                                    }
                                     isInputSuccess = false;
                                 }
                                 MoveEnemy();
@@ -273,16 +346,33 @@ namespace ITEA_Homework6_v4
                         case ConsoleKey.D:
                             {
 
-                                if (IsPositionAvailable(0, 1))
+                                if (IsPositionAvailable(0, 1) && player.IsAlive)
                                 {
-
+                                    for (int i = 0; i < enemies.Length; i++)
+                                    {
+                                        DamageToEnemy(0, 1, enemies[i]);
+                                    }
                                     SetPlayerToPosition(0, 1);
                                     TurnCount++;
                                     player.Icon = '→';
                                 }
                                 else
                                 {
-                                    Console.WriteLine("Position is unavailable");
+                                    if (!player.IsAlive)
+                                    {
+                                        player.Icon = 'X';
+                                        Console.Clear();
+                                        ToConsole("GAME OVER", ConsoleColor.Red);
+                                        return;
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Position is unavailable");
+                                        for (int i = 0; i < enemies.Length; i++)
+                                        {
+                                            DamageToEnemy(0, 1, enemies[i]);
+                                        }
+                                    }
                                     isInputSuccess = false;
                                 }
                                 MoveEnemy();
@@ -291,16 +381,33 @@ namespace ITEA_Homework6_v4
                         case ConsoleKey.S:
                             {
 
-                                if (IsPositionAvailable(1, 0))
+                                if (IsPositionAvailable(1, 0) && player.IsAlive)
                                 {
-
+                                    for (int i = 0; i < enemies.Length; i++)
+                                    {
+                                        DamageToEnemy(1, 0, enemies[i]);
+                                    }
                                     SetPlayerToPosition(1, 0);
                                     TurnCount++;
                                     player.Icon = '↓';
                                 }
                                 else
                                 {
-                                    Console.WriteLine("Position is unavailable");
+                                    if (!player.IsAlive)
+                                    {
+                                        player.Icon = 'X';
+                                        Console.Clear();
+                                        ToConsole("GAME OVER", ConsoleColor.Red);
+                                        return;
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Position is unavailable");
+                                        for (int i = 0; i < enemies.Length; i++)
+                                        {
+                                            DamageToEnemy(1, 0, enemies[i]);
+                                        }
+                                    }
                                     isInputSuccess = false;
                                 }
                                 MoveEnemy();
@@ -349,19 +456,6 @@ namespace ITEA_Homework6_v4
                 {
                     newPosX_Enemies = newPosY_Enemies = 1;
                 }
-                //for (int i = 1; i >= -1; i--)
-                //{
-                //    for (int j = -1; j <= 1; j++)
-                //    {
-                //        if (newPosX_Enemies + i > 0 && newPosY_Enemies + j > 0 && cells[newPosX_Enemies + i, newPosY_Enemies + j].CellValue == player.Icon)
-                //        {
-                //            player.Health -= 15; //you can customize your Player's damage by adding a weapon. 25 by default
-                //            enemy.X = xPos_Enemies;
-                //            enemy.Y = yPos_Enemies;
-                //            return;
-                //        }
-                //    }
-                //}
                 if (xPos_Enemies == newPosX_Enemies && yPos_Enemies == newPosY_Enemies)
                 {
                     SetEnemy(enemy, ref cells[newPosX_Enemies, newPosY_Enemies]);
@@ -379,6 +473,48 @@ namespace ITEA_Homework6_v4
                 cells[xPos_Enemies, yPos_Enemies].Reset();
             }
         }
+        public (bool, int, int) IsEnemyNear()
+        {
+            bool res;
+            int X, Y;
+            if (cells[player.X + 0, player.Y - 1].IsEnemyKeeper)
+            {
+                res = true;
+                X = player.X + 0;
+                Y = player.Y - 1;
+                var tuple = (res, X, Y);
+                return tuple;
+            }
+            else if (cells[player.X - 1, player.Y + 0].IsEnemyKeeper)
+            {
+                res = true;
+                X = player.X - 1;
+                Y = player.Y + 0;
+                var tuple = (res, X, Y);
+                return tuple;
+            }
+            else if (cells[player.X + 0, player.Y + 1].IsEnemyKeeper)
+            {
+                res = true;
+                X = player.X + 0;
+                Y = player.Y + 1;
+                var tuple = (res, X, Y);
+                return tuple;
+            }
+            else if (cells[player.X + 1, player.Y + 0].IsEnemyKeeper)
+            {
+                res = true;
+                X = player.X + 1;
+                Y = player.Y + 0;
+                var tuple = (res, X, Y);
+                return tuple;
+            }
+            else return (false, 0, 0);
+        }
+        public void DamageToEnemy(int dx, int dy, Enemy enemy)
+        {
+            if ((player.X + dx == enemy.X && player.Y + dy == enemy.Y) && IsEnemyNear().Item1 && player.IsAlive) enemy.Health -= player.Damage;
+        }
         public void SetPlayerToPosition(int xDelta_Player, int yDelta_Player)
         {
             int xPos_Player = player.X;
@@ -395,18 +531,6 @@ namespace ITEA_Homework6_v4
                 player.Icon = 'X';
                 SetPlayer(player, ref cells[xPos_Player, yPos_Player]);
             }
-
-            //if (cells[newPosX_Player, newPosY_Player].CellValue == enemies[0].Icon)
-            //{
-            //    int[] toCompare_distance = new int[enemies.Length];
-
-            //    for (int i = 0; i < enemies.Length; i++)
-            //    {
-            //        toCompare_distance[i] = (int)Sqrt(Abs(player.X - enemies[i].X) * Abs(player.X - enemies[i].X) + Abs(player.Y - enemies[i].Y) * Abs(player.Y - enemies[i].Y));
-            //    }
-            //    int minVal = toCompare_distance.Min();
-            //    enemies[Array.IndexOf(toCompare_distance, minVal)].Health -= 25; //if you add Enemy type parameter to this function you will be able to shoose each enemie's damage. By default - 15 for each enemy
-            //}
 
             player.X = newPosX_Player;
             player.Y = newPosY_Player;
@@ -447,7 +571,7 @@ namespace ITEA_Homework6_v4
         public void RenderMap()
         {
             Console.Clear();
-            Console.WriteLine($"Turn count: {TurnCount}, HP: {player.Health}, up: {fix_counter_up}, down: {fix_counter_down}, left: {fix_counter_left}, right: {fix_counter_right}");
+            Console.WriteLine($"Turn count: {TurnCount}, HP: {player.Health}, Nearest enemy HP: {enemies[IndexOfNearestEnemy(enemies)].Health} up: {fix_counter_up}, down: {fix_counter_down}, left: {fix_counter_left}, right: {fix_counter_right}");
             for (int i = 0; i < cells.GetLength(0); i++)
             {
                 Console.WriteLine(new string('-', cells.GetLength(1) * 4 + 1));
